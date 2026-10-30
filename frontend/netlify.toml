@@ -1,0 +1,6 @@
+# Netlify settings (used automatically when you connect the repo).
+# In the Netlify UI set "Base directory" to `frontend`, and add the
+# environment variable VITE_API_URL = your Render backend URL.
+[build]
+  command = "npm run build"
+  publish = "dist"
