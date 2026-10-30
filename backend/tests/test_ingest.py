@@ -60,3 +60,16 @@ def test_scheduled_match_has_no_result():
         session.commit()
         m = session.scalar(select(Match).where(Match.fd_api_id == 777002))
         assert m.result is None and m.home_goals is None
+
+
+def test_supabase_style_url_gets_psycopg_driver(monkeypatch):
+    import importlib
+
+    import app.config as config
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pw@host:5432/postgres")
+    try:
+        assert importlib.reload(config).DATABASE_URL == "postgresql+psycopg://user:pw@host:5432/postgres"
+    finally:
+        monkeypatch.undo()
+        importlib.reload(config)

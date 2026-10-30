@@ -67,3 +67,29 @@ def test_predict_fixtures_returns_upcoming_with_predictions_and_saves_them(clien
 def test_cors_allows_local_frontend(client):
     r = client.get("/health", headers={"Origin": "http://localhost:5173"})
     assert r.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+@pytest.mark.parametrize(
+    "origin, allowed",
+    [
+        ("https://ucl-predictor.onrender.com", True),
+        ("https://ucl-predictor-x7k2.onrender.com", True),
+        ("https://evil-site.onrender.com", False),
+        ("https://ucl-predictor.onrender.com.evil.com", False),
+    ],
+)
+def test_cors_pattern_for_render(client, origin, allowed):
+    r = client.get("/health", headers={"Origin": origin})
+    assert (r.headers.get("access-control-allow-origin") == origin) is allowed
+
+
+def test_postgres_tables_have_row_level_security(client):
+    from sqlalchemy import text
+
+    from app.database import engine
+
+    if engine.dialect.name != "postgresql":
+        pytest.skip("only relevant on Postgres/Supabase")
+    with engine.connect() as conn:
+        rows = conn.execute(text("SELECT relname, relrowsecurity FROM pg_class WHERE relname IN ('teams','matches','predictions','app_meta')")).all()
+    assert len(rows) == 4 and all(rls for _, rls in rows)

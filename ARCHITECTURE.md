@@ -35,7 +35,7 @@ A full-stack project plan for a beginner Python programmer who wants to learn ne
 | At least 1 never used before | Both of the above are new to you. React and FastAPI are new too |
 | JS recommended | The **frontend is React**. The ML core stays in Python (your strength). This is a normal real-world split, not a workaround |
 | Public GitHub repo + README | `README.md` follows the submission skeleton (section 11) |
-| Deploy if possible | Render (backend) + Netlify (frontend) + Supabase (DB), all on free tiers. `render.yaml` and `frontend/netlify.toml` are included |
+| Deploy if possible | Render (API + static frontend) + Supabase (DB), all on free tiers. One `render.yaml` Blueprint deploys both; [DEPLOY.md](DEPLOY.md) walks through it |
 
 About the data source: football-data.org's free tier covers 12 competitions, **including the Champions League and the top 5 leagues**, at 10 requests/minute, with slightly delayed (not live) scores. That suits this project. You don't need live data. You need *historical* results for training and fixture lists that are accurate by the next day. Older seasons may be restricted on the free tier (change #11). If you later want richer stats, such as player-level data, API-Football's free tier (100 req/day) is the usual next step.
 
@@ -86,7 +86,7 @@ About the data source: football-data.org's free tier covers 12 competitions, **i
 | Database | **Postgres via Supabase** | A new platform. Free tier, a real relational database (not a toy), and a web dashboard for browsing your tables while you learn SQL |
 | Frontend | **React 19** (via Vite) + React-Bootstrap | A new language for you (JS/JSX). Vite is faster and simpler to set up than older tooling. React-Bootstrap gives you a decent-looking UI without deep CSS knowledge |
 | HTTP client | **axios** | Cleaner syntax than raw `fetch` for a beginner |
-| Deployment | Render (backend) + Netlify (frontend) | Both have generous free tiers and need almost no configuration for these stacks |
+| Deployment | Render (Python web service + static site) | A generous free tier, and one Blueprint file (`render.yaml`) deploys both halves of the app |
 | Local dev DB | **SQLite** first, then Postgres | See section 10. Build against something with no setup before adding a network dependency |
 
 ---
@@ -153,8 +153,8 @@ This is a **multi-class classification** problem: the outcome is one of `{Home W
 Once trained, the model is saved with `joblib.dump`, together with `model_meta.json`, which holds the exact feature list, the metrics and the coefficients. FastAPI loads both once at startup and reuses them for every request. You are **not** retraining on every prediction, which would be far too slow. At startup the API also replays every played match through `features.walk()` to get each team's *current* Elo and form.
 
 Two things every beginner backend needs:
-- **CORS (Cross-Origin Resource Sharing):** by default, browsers block a page on `yoursite.netlify.app` from calling an API on `yourapi.onrender.com`, because they are different "origins". FastAPI's `CORSMiddleware` explicitly allows your frontend's domain, set with the `CORS_ORIGINS` environment variable. Without it you get a confusing browser error that has nothing to do with your code being wrong.
-- **Environment variables for secrets:** your football-data.org key and database connection string live in `backend/.env`, which is listed in `.gitignore` and never pushed to GitHub. The code reads them in `app/config.py`. In production you set them in the Render and Netlify dashboards.
+- **CORS (Cross-Origin Resource Sharing):** by default, browsers block a page on `ucl-predictor.onrender.com` from calling an API on `ucl-predictor-api.onrender.com`, because they are different "origins". FastAPI's `CORSMiddleware` explicitly allows your frontend's domain, set with the `CORS_ORIGINS` (exact URLs) or `CORS_ORIGIN_REGEX` (a pattern) environment variable. Without it you get a confusing browser error that has nothing to do with your code being wrong.
+- **Environment variables for secrets:** your football-data.org key and database connection string live in `backend/.env`, which is listed in `.gitignore` and never pushed to GitHub. The code reads them in `app/config.py`. In production you set them in the Render dashboard.
 
 ### 4.8 React basics you actually need (nothing more)
 React apps are built from **components**: functions that return HTML-like syntax called JSX. Two hooks cover 90% of what you need at the start:
@@ -182,7 +182,7 @@ That's most of the mental model. Everything else (routing, forms, state librarie
 ### 4.9 Deployment concepts
 "Deploying" means running your code on a server other people can reach, instead of only on your laptop. For this stack:
 - **Backend (Render):** `render.yaml` tells Render "this is a Python web service in `backend/`: install, train, run uvicorn". You set the secrets in its dashboard. The free plan **sleeps after 15 minutes idle**, so the first request takes about 50 seconds; the frontend shows a "waking up" message. Render's disk is also wiped on every deploy, which is why production needs Supabase rather than SQLite.
-- **Frontend (Netlify):** `npm run build` turns the React app into static HTML/CSS/JS files, and Netlify hosts them directly. The frontend itself needs no server.
+- **Frontend (Render static site):** `npm run build` turns the React app into static HTML/CSS/JS files, and Render serves them directly. The frontend itself needs no server, so it never sleeps. `VITE_API_URL` is baked in *at build time*, so changing it needs a rebuild.
 - **Database (Supabase):** already hosted for you. You get a connection string to put in your backend's environment variables (use the Session pooler string, change #12).
 
 ---
@@ -306,7 +306,7 @@ The full chain (React → your API → DB/model → back to React) works.
 The backend caches the current season with a 6-hour TTL, and the frontend renders `/predict/fixtures`.
 
 **Phase 5 — Migrate DB to Supabase, deploy everything** ⏳ *(needs your accounts; steps are in the README)*
-Point `DATABASE_URL` at Supabase (Session pooler), run `load_data`, deploy with `render.yaml`, connect Netlify, and set `VITE_API_URL` and `CORS_ORIGINS`.
+Point `DATABASE_URL` at Supabase (Session pooler), run `load_data`, then deploy both services with the `render.yaml` Blueprint. Step-by-step: [DEPLOY.md](DEPLOY.md).
 
 **Phase 6 — Polish + README** ⏳
 Loading, error and "server waking up" states are done. Still to do: screenshots or a GIF, and your own Learning Journey, Technical Rationale and AI Usage sections.

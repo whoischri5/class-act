@@ -14,13 +14,13 @@ Every club gets an **Elo rating**, a single number for how strong it is right no
 | [Supabase](https://supabase.com/) | Hosted Postgres database in production |
 | [FastAPI](https://fastapi.tiangolo.com/) | Python web API that serves the model |
 | [React](https://react.dev/) + [Vite](https://vitejs.dev/) | Frontend |
-| Render + Netlify | Hosting |
+| [Render](https://render.com/) | Hosting for both the API and the website |
 
 The full design, with the concepts explained, is in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Live Demo
 
-_Coming in Phase 5: add the Netlify link here._
+_Coming in Phase 5: add your Render site link here (see [DEPLOY.md](DEPLOY.md))._
 
 ## Screenshots / Demo
 
@@ -44,7 +44,7 @@ backend/
 frontend/
   src/api.js           every call to the backend lives here
   src/components/      FixtureList, FixtureCard, ProbabilityBar, MatchupPredictor, ModelInfo
-render.yaml            backend deploy config for Render
+render.yaml            Render Blueprint: deploys the API + the website
 .github/workflows/     CI tests + optional daily data refresh
 ```
 
@@ -121,12 +121,7 @@ Open http://localhost:5173.
 
 ### Deployment (Phase 5)
 
-1. **Supabase.** Create a project. Under *Connect*, copy the **Session pooler** connection string; Render can't reach the "direct" one because it is IPv6-only. Change its start to `postgresql+psycopg://` and put it in `backend/.env` as `DATABASE_URL`. Then run `python -m scripts.load_data` again. The tables are created automatically.
-2. **Render.** Choose *New → Blueprint* and pick this repo. It reads `render.yaml`. Fill in `FOOTBALL_DATA_API_KEY`, `DATABASE_URL`, and `CORS_ORIGINS` (your Netlify URL). The model is trained during each deploy.
-3. **Netlify.** Import the repo, set **Base directory** to `frontend`, and add the environment variable `VITE_API_URL` set to your Render URL.
-4. **Optional:** add `FOOTBALL_DATA_API_KEY` and `DATABASE_URL` as GitHub Actions secrets. The *Refresh data* workflow will then pull new results for every competition each day.
-
-The free Render plan sleeps after 15 minutes without traffic, so the first request after that can take about 50 seconds. The frontend shows a "waking up" message while it waits.
+Everything deploys to **Render** from the `render.yaml` Blueprint: the API as a Python web service and the React app as a static site. The data lives in **Supabase**. The step-by-step guide is in **[DEPLOY.md](DEPLOY.md)**.
 
 ## Learning Journey
 

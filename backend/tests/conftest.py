@@ -10,6 +10,7 @@ os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or f"sqlite:///
 os.environ["SAMPLE_DATA_DIR"] = str(_tmp / "sample")
 os.environ["RAW_DATA_DIR"] = str(_tmp / "raw")
 os.environ["MODELS_DIR"] = str(_tmp / "models")
-os.environ["FOOTBALL_DATA_API_KEY"] = ""  # never call the real API from tests
+os.environ["FOOTBALL_DATA_API_KEY"] = ""
+os.environ["CORS_ORIGIN_REGEX"] = r"https://ucl-predictor(-[a-z0-9]+)*\.onrender\.com"  # same as render.yaml  # never call the real API from tests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
