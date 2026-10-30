@@ -1,0 +1,13 @@
+# Web API
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30
+# Database (SQLite is built into Python; psycopg is the Postgres/Supabase driver)
+SQLAlchemy>=2.0,<3
+psycopg[binary]>=3.2
+# Data + ML
+numpy>=2.0
+scikit-learn>=1.5
+joblib>=1.4
+# HTTP client for football-data.org + reading .env files
+requests>=2.32
+python-dotenv>=1.0

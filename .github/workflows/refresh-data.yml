@@ -1,0 +1,38 @@
+# Once a day, pull new results + fixtures for every competition into your database.
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
+#   FOOTBALL_DATA_API_KEY and DATABASE_URL (your Supabase pooler string).
+# Until both are set, this workflow does nothing.
+name: Refresh data
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # 06:17 UTC daily
+  workflow_dispatch: # adds a "Run workflow" button in the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check secrets are configured
+        id: check
+        run: |
+          if [ -n "$FOOTBALL_DATA_API_KEY" ] && [ -n "$DATABASE_URL" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Secrets not set yet - skipping."
+          fi
+        working-directory: .
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.ready == 'true'
+        with:
+          python-version: "3.12"
+      - if: steps.check.outputs.ready == 'true'
+        run: pip install -r requirements.txt && python -m scripts.refresh_data

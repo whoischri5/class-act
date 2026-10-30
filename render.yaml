@@ -1,0 +1,21 @@
+# Render "Blueprint": in the Render dashboard choose New -> Blueprint and pick this repo.
+# You'll be asked for the values marked `sync: false` (they're secrets, so not stored here).
+services:
+  - type: web
+    name: ucl-predictor-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    # Training runs during each deploy, reading the matches you loaded into Supabase.
+    buildCommand: pip install -r requirements.txt && python -m scripts.train
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: FOOTBALL_DATA_API_KEY
+        sync: false
+      - key: DATABASE_URL # Supabase *Session pooler* string, postgresql+psycopg://...
+        sync: false
+      - key: CORS_ORIGINS # e.g. https://your-site.netlify.app
+        sync: false
