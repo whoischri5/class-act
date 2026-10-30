@@ -19,6 +19,7 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
     select,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship
 
@@ -108,6 +109,13 @@ def init_db() -> None:
     if DATABASE_URL.startswith("sqlite"):
         (BACKEND_DIR / "data").mkdir(exist_ok=True)
     Base.metadata.create_all(engine)
+    if engine.dialect.name == "postgresql":
+        # Supabase also exposes every table through a public "Data API". Turning on
+        # Row Level Security with no policies switches that off; our backend still has
+        # full access because it connects as the tables' owner.
+        with engine.begin() as conn:
+            for table in Base.metadata.sorted_tables:
+                conn.execute(text(f'ALTER TABLE "{table.name}" ENABLE ROW LEVEL SECURITY'))
 
 
 def get_meta(session: Session, key: str) -> str | None:

@@ -1,12 +1,14 @@
-# Render "Blueprint": in the Render dashboard choose New -> Blueprint and pick this repo.
-# You'll be asked for the values marked `sync: false` (they're secrets, so not stored here).
+# Render "Blueprint": deploys BOTH halves of the app in one go.
+# In the Render dashboard choose New -> Blueprint and pick this repo (full walkthrough: DEPLOY.md).
+# Values marked `sync: false` are secrets or URLs Render will ask you to type in.
 services:
+  # 1) The Python API (FastAPI). Needs Supabase loaded with data BEFORE the first deploy,
+  #    because each deploy trains the model from the database.
   - type: web
     name: ucl-predictor-api
     runtime: python
     plan: free
     rootDir: backend
-    # Training runs during each deploy, reading the matches you loaded into Supabase.
     buildCommand: pip install -r requirements.txt && python -m scripts.train
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
@@ -15,7 +17,20 @@ services:
         value: 3.12.8
       - key: FOOTBALL_DATA_API_KEY
         sync: false
-      - key: DATABASE_URL # Supabase *Session pooler* string, postgresql+psycopg://...
+      - key: DATABASE_URL # Supabase Session pooler string
         sync: false
-      - key: CORS_ORIGINS # e.g. https://your-site.netlify.app
+      - key: CORS_ORIGIN_REGEX # lets the frontend below call the API, whatever suffix Render gives its URL
+        value: https://ucl-predictor(-[a-z0-9]+)*\.onrender\.com
+
+  # 2) The React frontend, built into plain HTML/CSS/JS and served as a static site (free, never sleeps).
+  - type: web
+    name: ucl-predictor
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    buildFilter:
+      paths:
+        - frontend/**
+    envVars:
+      - key: VITE_API_URL # the API's URL, e.g. https://ucl-predictor-api.onrender.com
         sync: false

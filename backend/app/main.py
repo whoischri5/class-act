@@ -13,7 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import modeling
-from app.config import CORS_ORIGINS, FIXTURES_CACHE_HOURS, FOOTBALL_DATA_API_KEY, TARGET_COMPETITION
+from app.config import CORS_ORIGIN_REGEX, CORS_ORIGINS, FIXTURES_CACHE_HOURS, FOOTBALL_DATA_API_KEY, TARGET_COMPETITION
 from app.database import Match, Prediction, Team, engine, get_meta, init_db, select, utcnow
 from app.features import FeatureTracker, walk
 from app.fixtures import refresh_current_season
@@ -58,7 +58,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_middleware(
-    CORSMiddleware, allow_origins=CORS_ORIGINS, allow_methods=["GET"], allow_headers=["*"]
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX,
+    allow_methods=["GET"],
+    allow_headers=["*"],
 )
 
 

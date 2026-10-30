@@ -3,8 +3,8 @@
 // so the football-data.org key stays secret on the server (the "backend proxy" pattern).
 import axios from "axios";
 
-// Locally this is http://127.0.0.1:8000. In production, set VITE_API_URL in the
-// Netlify/Vercel dashboard to your Render URL (e.g. https://ucl-predictor-api.onrender.com).
+// Locally this is http://127.0.0.1:8000. In production, VITE_API_URL is set on the
+// Render static site to the API's URL (e.g. https://ucl-predictor-api.onrender.com).
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000",
   timeout: 60000, // free Render servers can take ~50s to wake up
